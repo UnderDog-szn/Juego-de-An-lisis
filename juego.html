@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clasificador Cósmico — UI y Patrones de Diseño</title>
+<style>
+  :root{
+    --bg-deep:#0B0620;
+    --bg-mid:#1B1140;
+    --panel:#221A4A;
+    --panel-soft:#2A2160;
+    --pink:#FF6FD8;
+    --blue:#5EC8FF;
+    --teal:#57E6C1;
+    --purple:#B66DFF;
+    --yellow:#FFD66B;
+    --danger:#FF5C7A;
+    --text:#F4F1FF;
+    --text-dim:#B7AEDC;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    color:var(--text);
+    font-family:'Segoe UI', Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 8% 12%, rgba(255,255,255,0.9) 0 1px, transparent 1.6px),
+      radial-gradient(circle at 35% 78%, rgba(255,255,255,0.7) 0 1px, transparent 1.6px),
+      radial-gradient(circle at 62% 25%, rgba(255,255,255,0.6) 0 1px, transparent 1.6px),
+      radial-gradient(circle at 88% 65%, rgba(255,255,255,0.8) 0 1px, transparent 1.6px),
+      radial-gradient(ellipse at 12% 88%, rgba(255,111,216,0.20), transparent 55%),
+      radial-gradient(ellipse at 90% 8%, rgba(94,200,255,0.20), transparent 55%),
+      radial-gradient(ellipse at 75% 90%, rgba(87,230,193,0.16), transparent 55%),
+      linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 55%, #2a1158 100%);
+    background-size:160px 160px,190px 190px,170px 170px,200px 200px,auto,auto,auto,cover;
+    background-repeat:repeat,repeat,repeat,repeat,no-repeat,no-repeat,no-repeat,no-repeat;
+    background-attachment:fixed;
+    padding:20px 16px 40px;
+  }
+  .wrap{ max-width:880px; margin:0 auto; }
+
+  .logo{
+    text-align:center;
+    margin-bottom:6px;
+  }
+  .logo h1{
+    font-size:2.1rem;
+    margin:0;
+    font-weight:800;
+    letter-spacing:.5px;
+    background:linear-gradient(90deg, var(--pink), var(--blue), var(--teal));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .logo p{
+    color:var(--text-dim);
+    margin:6px 0 0 0;
+    font-size:.95rem;
+  }
+
+  .screen{ margin-top:18px; }
+  .hidden{ display:none !important; }
+
+  .card{
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
+  }
+
+  .level-pills{ display:flex; gap:10px; margin:18px 0; flex-wrap:wrap; }
+  .level-pill{
+    flex:1; min-width:200px;
+    background:var(--panel-soft);
+    border-radius:14px;
+    padding:14px 16px;
+    border:1px solid rgba(255,255,255,0.07);
+  }
+  .level-pill .num{ font-weight:800; font-size:.78rem; letter-spacing:1px; }
+  .level-pill .t{ font-size:.95rem; margin-top:4px; font-weight:600; }
+  .level-pill .d{ font-size:.78rem; color:var(--text-dim); margin-top:2px; }
+  .level-pill.l1 .num{ color:var(--pink); }
+  .level-pill.l2 .num{ color:var(--blue); }
+  .level-pill.l3 .num{ color:var(--teal); }
+
+  .how{ color:var(--text-dim); line-height:1.6; font-size:.92rem; margin:16px 0; }
+  .how b{ color:var(--text); }
+
+  .big-btn{
+    display:block;
+    width:100%;
+    margin-top:18px;
+    border:none;
+    border-radius:16px;
+    padding:16px;
+    font-size:1.1rem;
+    font-weight:800;
+    letter-spacing:.5px;
+    cursor:pointer;
+    color:#22123f;
+    background:linear-gradient(90deg, var(--pink), var(--yellow));
+    box-shadow:0 8px 20px rgba(255,111,216,0.35);
+    transition:transform .15s;
+  }
+  .big-btn:hover{ transform:translateY(-2px); }
+  .big-btn:active{ transform:translateY(0); }
+  .big-btn:focus-visible{ outline:3px solid var(--teal); outline-offset:3px; }
+
+  .ghost-btn{
+    border:1px solid rgba(255,255,255,0.18);
+    background:transparent;
+    color:var(--text-dim);
+    border-radius:12px;
+    padding:11px 18px;
+    cursor:pointer;
+    font-size:.88rem;
+    font-weight:600;
+  }
+  .ghost-btn:hover{ color:var(--text); border-color:var(--text-dim); }
+  .ghost-btn:focus-visible, .big-btn:focus-visible{ outline:3px solid var(--teal); outline-offset:2px; }
+
+  /* ---- HUD ---- */
+  .hud{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .hud-item{
+    background:var(--panel-soft);
+    border-radius:12px;
+    padding:8px 14px;
+    font-weight:700;
+    font-size:.95rem;
+    display:flex; align-items:center; gap:6px;
+  }
+  #scoreVal{ color:var(--yellow); }
+  #comboDisplay{ color:var(--pink); }
+  .lives{ letter-spacing:2px; }
+  .help-btn{
+    margin-left:auto;
+    width:38px;height:38px;border-radius:50%;
+    background:var(--panel-soft);
+    border:1px solid rgba(255,255,255,0.15);
+    color:var(--text);
+    font-size:1.05rem;
+    cursor:pointer;
+  }
+  .help-btn:hover{ border-color:var(--teal); }
+
+  .level-banner{
+    text-align:center;
+    font-weight:800;
+    font-size:1.05rem;
+    margin-bottom:12px;
+    color:var(--text);
+  }
+  .level-banner span{ color:var(--text-dim); font-weight:500; font-size:.85rem; display:block; margin-top:2px;}
+
+  /* ---- play area ---- */
+  .play-area{
+    position:relative;
+    height:clamp(300px, 52vh, 440px);
+    border-radius:20px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.035);
+    border:1px solid rgba(255,255,255,0.10);
+    margin-bottom:16px;
+  }
+  .capsule{
+    position:absolute;
+    max-width:210px;
+    background:rgba(20,12,45,0.92);
+    border:2px solid rgba(255,255,255,0.55);
+    border-radius:999px;
+    color:var(--text);
+    padding:10px 16px;
+    font-size:.84rem;
+    font-weight:600;
+    text-align:center;
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+    box-shadow:0 0 14px rgba(255,255,255,0.18);
+    animation:wobble 1.7s ease-in-out infinite alternate;
+  }
+  .capsule.grabbed{
+    animation:none;
+    cursor:grabbing;
+    transform:scale(1.08) rotate(0deg) !important;
+    box-shadow:0 0 22px rgba(255,255,255,0.4);
+    z-index:50;
+  }
+  @keyframes wobble{ from{ transform:rotate(-3deg); } to{ transform:rotate(3deg); } }
+
+  /* ---- bins ---- */
+  .bins-row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .port{
+    flex:1; min-width:130px;
+    min-height:104px;
+    border-radius:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px;
+    padding:10px 8px;
+    border:3px solid rgba(255,255,255,0.3);
+    background:rgba(255,255,255,0.04);
+    text-align:center;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .port .ic{ font-size:1.6rem; }
+  .port .lb{ font-size:.78rem; font-weight:700; }
+  .port.hover{ transform:scale(1.05); }
+  .port.flash-good{ box-shadow:0 0 0 4px var(--teal) inset; }
+  .port.flash-bad{ box-shadow:0 0 0 4px var(--danger) inset; }
+
+  /* ---- fx layer ---- */
+  #fxLayer{ position:fixed; inset:0; pointer-events:none; z-index:300; }
+  .fx-text{
+    position:absolute;
+    font-weight:800;
+    font-size:1.05rem;
+    transform:translate(-50%,-50%);
+    animation:floatUp 0.9s ease-out forwards;
+    white-space:nowrap;
+  }
+  .fx-text.good{ color:var(--teal); }
+  .fx-text.bad{ color:var(--danger); }
+  @keyframes floatUp{ from{ opacity:1; transform:translate(-50%,-50%); } to{ opacity:0; transform:translate(-50%,-140%); } }
+  .fx-particle{
+    position:absolute;
+    width:7px; height:7px;
+    border-radius:50%;
+    animation:burst .6s ease-out forwards;
+  }
+  @keyframes burst{
+    from{ opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); }
+    to{ opacity:0; transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(0.4); }
+  }
+
+  /* ---- overlays ---- */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(8,4,24,0.82);
+    display:flex; align-items:center; justify-content:center;
+    z-index:200;
+    padding:20px;
+  }
+  .overlay .card{ max-width:440px; width:100%; text-align:center; }
+  .overlay h2{ margin:0 0 8px 0; font-size:1.4rem; }
+  .overlay .stat-row{
+    display:flex; justify-content:space-between;
+    background:var(--panel-soft);
+    border-radius:10px;
+    padding:9px 14px;
+    margin:7px 0;
+    font-size:.9rem;
+  }
+  .overlay .stat-row b{ color:var(--yellow); }
+  .legend{ text-align:left; margin-top:10px; }
+  .legend .row{ display:flex; align-items:center; gap:10px; padding:6px 0; font-size:.88rem; }
+  .legend .row .ic{ font-size:1.2rem; }
+
+  footer{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:.72rem;
+    margin-top:22px;
+    opacity:.65;
+    letter-spacing:.5px;
+  }
+
+  /* ---- QR share panel ---- */
+  .qr-toggle{
+    display:inline-block;
+    margin-top:16px;
+    background:none;
+    border:none;
+    color:var(--blue);
+    font-size:.85rem;
+    font-weight:700;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:4px 0;
+  }
+  .qr-panel{
+    margin-top:14px;
+    background:var(--panel-soft);
+    border-radius:14px;
+    padding:16px;
+  }
+  .qr-panel .tip{ font-size:.8rem; color:var(--text-dim); line-height:1.5; margin:0 0 12px 0; }
+  .qr-panel input[type="text"]{
+    width:100%;
+    background:var(--bg-deep);
+    border:1px solid rgba(255,255,255,0.18);
+    color:var(--text);
+    padding:11px 12px;
+    border-radius:10px;
+    font-size:.9rem;
+    margin-bottom:10px;
+  }
+  .qr-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .qr-actions button{
+    flex:1;
+    border:none;
+    border-radius:10px;
+    padding:11px 14px;
+    font-weight:700;
+    font-size:.85rem;
+    cursor:pointer;
+  }
+  #qrGenBtn{ background:var(--teal); color:#0B0620; }
+  #qrDownloadBtn{ background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,0.2); }
+  #qrcodeBox{
+    margin-top:14px;
+    display:flex;
+    justify-content:center;
+    background:#fff;
+    border-radius:12px;
+    padding:14px;
+  }
+  #qrcodeBox:empty{ display:none; }
+
+  /* ---- touch & mobile refinements ---- */
+  @media (hover:none) and (pointer:coarse){
+    .play-area{ touch-action:none; }
+    body{ overscroll-behavior-y:contain; -webkit-tap-highlight-color:transparent; }
+  }
+
+  @media (max-width:480px){
+    body{ padding:14px 10px 30px; }
+    .logo h1{ font-size:1.5rem; }
+    .logo p{ font-size:.82rem; }
+    .card{ padding:16px; border-radius:16px; }
+    .level-pill{ min-width:0; }
+    .how{ font-size:.86rem; }
+    .big-btn{ font-size:1rem; padding:14px; }
+    .hud{ gap:8px; }
+    .hud-item{ font-size:.78rem; padding:7px 10px; }
+    .help-btn{ width:42px; height:42px; }
+    .level-banner{ font-size:.92rem; }
+    .play-area{ height:clamp(260px, 42vh, 360px); border-radius:16px; }
+    .capsule{ font-size:.74rem; padding:9px 13px; max-width:min(190px, 62vw); }
+    .bins-row{ gap:8px; }
+    .port{ min-width:80px; min-height:86px; border-radius:13px; padding:8px 6px; }
+    .port .ic{ font-size:1.3rem; }
+    .port .lb{ font-size:.66rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <h1>🚀 Clasificador Cósmico</h1>
+    <p>Diseño de Interfaz (UI) &amp; Diseño basado en Patrones</p>
+  </div>
+
+  <!-- ===================== START SCREEN ===================== -->
+  <div id="screenStart" class="screen">
+    <div class="card">
+      <p class="how">Cápsulas de datos caen desde el espacio. <b>Arrástralas</b> hasta el puerto correcto antes de que choquen contra el suelo. Si aciertas, sumas puntos y subes tu combo; si fallas o se te escapa una cápsula, pierdes una vida.</p>
+      <div class="level-pills">
+        <div class="level-pill l1">
+          <div class="num">NIVEL 1</div>
+          <div class="t">Tipos de Interfaz</div>
+          <div class="d">GUI · CLI · VUI · Touch</div>
+        </div>
+        <div class="level-pill l2">
+          <div class="num">NIVEL 2</div>
+          <div class="t">Patrones GoF</div>
+          <div class="d">Creacional · Estructural · Comportamiento</div>
+        </div>
+        <div class="level-pill l3">
+          <div class="num">NIVEL 3</div>
+          <div class="t">Modo difícil</div>
+          <div class="d">Diseño de UI vs Diseño por Patrones</div>
+        </div>
+      </div>
+      <button class="big-btn" onclick="beginGame()">🕹️ Jugar</button>
+
+      <button class="qr-toggle" onclick="toggleQrPanel()" id="qrToggleBtn">📲 Generar QR para que tu clase lo abra desde el celular</button>
+      <div class="qr-panel hidden" id="qrPanel">
+        <p class="tip">1) Sube este archivo .html a un hosting gratuito (lo más rápido: arrastra el archivo en <b>app.netlify.com/drop</b>, sin necesidad de crear cuenta, y te da un enlace público al instante).<br>2) Pega aquí ese enlace y genera el QR para tu diapositiva.</p>
+        <input type="text" id="qrUrlInput" placeholder="https://tu-enlace-publico.netlify.app">
+        <div class="qr-actions">
+          <button id="qrGenBtn" onclick="generateQR()">Generar QR</button>
+          <button id="qrDownloadBtn" class="hidden" onclick="downloadQR()">Descargar PNG</button>
+        </div>
+        <div id="qrcodeBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== GAME SCREEN ===================== -->
+  <div id="screenGame" class="screen hidden">
+    <div class="hud">
+      <div class="hud-item">⭐ <span id="scoreVal">0</span></div>
+      <div class="hud-item" id="comboDisplay">Combo x1</div>
+      <div class="hud-item lives" id="livesDisplay"></div>
+      <button class="help-btn" onclick="toggleHelp(true)" title="Cómo jugar">❔</button>
+    </div>
+    <div class="level-banner" id="levelBanner"></div>
+    <div class="play-area" id="playArea"></div>
+    <div class="bins-row" id="binsRow"></div>
+  </div>
+
+  <footer>USO EN CLASE — DISEÑO DE SOFTWARE: UI Y PATRONES DE DISEÑO</footer>
+</div>
+
+<!-- ===================== OVERLAYS ===================== -->
+<div id="overlayHelp" class="overlay hidden">
+  <div class="card">
+    <h2>¿Cómo se juega?</h2>
+    <p class="how">Arrastra cada cápsula hasta el puerto espacial correcto antes de que toque el suelo. Aciertos consecutivos multiplican tus puntos (combo). Un error o una cápsula perdida te cuesta una vida.</p>
+    <div class="legend" id="helpLegend"></div>
+    <button class="big-btn" onclick="toggleHelp(false)">Entendido</button>
+  </div>
+</div>
+
+<div id="overlayLevelComplete" class="overlay hidden">
+  <div class="card">
+    <h2 id="lcTitle">¡Nivel superado!</h2>
+    <div class="stat-row"><span>Aciertos</span><b id="lcCorrect"></b></div>
+    <div class="stat-row"><span>Errores</span><b id="lcWrong"></b></div>
+    <div class="stat-row"><span>Cápsulas perdidas</span><b id="lcMissed"></b></div>
+    <div class="stat-row"><span>Puntaje total</span><b id="lcScore"></b></div>
+    <button class="big-btn" id="lcContinueBtn" onclick="continueAfterLevel()">Siguiente nivel →</button>
+  </div>
+</div>
+
+<div id="overlayGameOver" class="overlay hidden">
+  <div class="card">
+    <h2>💥 ¡Te quedaste sin vidas!</h2>
+    <div class="stat-row"><span>Puntaje total</span><b id="goScore"></b></div>
+    <button class="big-btn" onclick="retryLevel()">Reintentar nivel</button>
+    <button class="ghost-btn" style="margin-top:10px;width:100%;" onclick="goToStart()">Volver al inicio</button>
+  </div>
+</div>
+
+<div id="overlayVictory" class="overlay hidden">
+  <div class="card">
+    <h2>🏆 ¡Misión cumplida!</h2>
+    <p class="how">Completaste los 3 niveles del Clasificador Cósmico.</p>
+    <div class="stat-row"><span>Puntaje final</span><b id="vScore"></b></div>
+    <button class="big-btn" onclick="beginGame()">Jugar de nuevo</button>
+    <button class="ghost-btn" style="margin-top:10px;width:100%;" onclick="goToStart()">Volver al inicio</button>
+  </div>
+</div>
+
+<div id="fxLayer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* =========================================================
+   QR SHARE PANEL
+========================================================= */
+function toggleQrPanel(){
+  const panel = document.getElementById('qrPanel');
+  panel.classList.toggle('hidden');
+}
+function generateQR(){
+  const input = document.getElementById('qrUrlInput');
+  const url = input.value.trim();
+  if(!url){ input.focus(); return; }
+  const box = document.getElementById('qrcodeBox');
+  box.innerHTML = '';
+  try{
+    new QRCode(box, {
+      text:url, width:220, height:220,
+      colorDark:'#1B1140', colorLight:'#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById('qrDownloadBtn').classList.remove('hidden');
+  }catch(e){
+    box.textContent = 'No se pudo generar el QR. Verifica el enlace.';
+  }
+}
+function downloadQR(){
+  const box = document.getElementById('qrcodeBox');
+  const canvas = box.querySelector('canvas');
+  const img = box.querySelector('img');
+  let dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
+  if(!dataUrl) return;
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = 'qr-clasificador-cosmico.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+</script>
+<script>
+/* =========================================================
+   DATA
+========================================================= */
+const COLORS = ['#FF6FD8','#5EC8FF','#57E6C1','#B66DFF'];
+
+const LEVELS = [
+  {
+    title:'Nivel 1 · Tipos de Interfaz',
+    subtitle:'Clasifica cada interacción según el tipo de interfaz que usa',
+    itemsPerLevel:14, baseSpeed:34, spawnStart:2200, spawnMin:1300, spawnRamp:40, ramp:1.5,
+    bins:[
+      {id:'gui', label:'GUI', emoji:'🖱️'},
+      {id:'cli', label:'CLI', emoji:'⌨️'},
+      {id:'vui', label:'VUI', emoji:'🎙️'},
+      {id:'touch', label:'Touch UI', emoji:'👆'}
+    ],
+    items:[
+      {text:'Hacer clic en un botón con el mouse', binId:'gui'},
+      {text:'Escribir: cd Documentos', binId:'cli'},
+      {text:'Decir "Oye Siri, pon música"', binId:'vui'},
+      {text:'Deslizar el dedo para cambiar de foto', binId:'touch'},
+      {text:'Arrastrar un ícono al escritorio', binId:'gui'},
+      {text:'Ejecutar: npm install', binId:'cli'},
+      {text:'Pedirle a Alexa el clima de hoy', binId:'vui'},
+      {text:'Pellizcar la pantalla para hacer zoom', binId:'touch'},
+      {text:'Abrir un menú desplegable con el cursor', binId:'gui'},
+      {text:'Escribir: git commit -m "fix"', binId:'cli'},
+      {text:'Activar el asistente de Google con la voz', binId:'vui'},
+      {text:'Tocar dos veces para dar "me gusta"', binId:'touch'},
+      {text:'Comando: ls -la', binId:'cli'},
+      {text:'Mantener presionada la pantalla para ver opciones', binId:'touch'}
+    ]
+  },
+  {
+    title:'Nivel 2 · Categorías de Patrones GoF',
+    subtitle:'Envía cada patrón a su categoría correcta',
+    itemsPerLevel:12, baseSpeed:44, spawnStart:2000, spawnMin:1200, spawnRamp:40, ramp:2,
+    bins:[
+      {id:'creacional', label:'Creacional', emoji:'🏗️'},
+      {id:'estructural', label:'Estructural', emoji:'🧩'},
+      {id:'comportamiento', label:'Comportamiento', emoji:'🔄'}
+    ],
+    items:[
+      {text:'Singleton', binId:'creacional'},
+      {text:'Factory Method', binId:'creacional'},
+      {text:'Builder', binId:'creacional'},
+      {text:'Prototype', binId:'creacional'},
+      {text:'Adapter', binId:'estructural'},
+      {text:'Decorator', binId:'estructural'},
+      {text:'Composite', binId:'estructural'},
+      {text:'Facade', binId:'estructural'},
+      {text:'Observer', binId:'comportamiento'},
+      {text:'Strategy', binId:'comportamiento'},
+      {text:'Command', binId:'comportamiento'},
+      {text:'Iterator', binId:'comportamiento'}
+    ]
+  },
+  {
+    title:'Nivel 3 · Modo difícil',
+    subtitle:'¿Es Diseño de Interfaz o Diseño basado en Patrones?',
+    itemsPerLevel:12, baseSpeed:54, spawnStart:1800, spawnMin:1100, spawnRamp:40, ramp:2.5,
+    bins:[
+      {id:'ui', label:'Diseño de UI', emoji:'🎨'},
+      {id:'patron', label:'Diseño por Patrones', emoji:'📐'}
+    ],
+    items:[
+      {text:'Elegir la paleta de colores de una app', binId:'ui'},
+      {text:'Definir la tipografía del texto de una pantalla', binId:'ui'},
+      {text:'Diseñar los íconos de una barra de navegación', binId:'ui'},
+      {text:'Decidir el espaciado entre botones de un formulario', binId:'ui'},
+      {text:'Crear una interfaz de voz para un asistente virtual', binId:'ui'},
+      {text:'Diseñar la animación de carga de una pantalla', binId:'ui'},
+      {text:'Usar el patrón "menú hamburguesa" en una app móvil', binId:'patron'},
+      {text:'Aplicar MVC para organizar las capas de un sistema', binId:'patron'},
+      {text:'Usar Singleton para una única conexión a base de datos', binId:'patron'},
+      {text:'Mostrar "breadcrumbs" para ubicar al usuario en el sitio', binId:'patron'},
+      {text:'Aplicar Observer para notificar cambios de estado', binId:'patron'},
+      {text:'Reutilizar un componente documentado en un Design System', binId:'patron'}
+    ]
+  }
+];
+const MAX_LIVES = 3;
+const MAX_ON_SCREEN = 4;
+
+/* =========================================================
+   STATE
+========================================================= */
+const state = {
+  running:false, paused:true,
+  levelIndex:0, level:null,
+  score:0, combo:1, lives:MAX_LIVES,
+  spawnedCount:0, resolvedCount:0,
+  spawnAccum:0, spawnInterval:1500, elapsed:0,
+  activeItems:[],
+  stats:{correct:0, wrong:0, missed:0}
+};
+
+const playArea = document.getElementById('playArea');
+const binsRow = document.getElementById('binsRow');
+const fxLayer = document.getElementById('fxLayer');
+
+/* =========================================================
+   AUDIO (WebAudio beeps, no external files needed)
+========================================================= */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+}
+function beep(freq,dur,type,vol){
+  if(!audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type||'sine';
+    osc.frequency.value = freq;
+    gain.gain.value = vol||0.05;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
+    osc.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sfxCorrect(){ beep(880,0.12,'sine',0.05); setTimeout(()=>beep(1320,0.12,'sine',0.05),90); }
+function sfxWrong(){ beep(160,0.25,'sawtooth',0.05); }
+function sfxMiss(){ beep(110,0.3,'square',0.04); }
+function sfxLevel(){ beep(660,0.1,'sine',0.05); setTimeout(()=>beep(880,0.12,'sine',0.05),100); setTimeout(()=>beep(1100,0.16,'sine',0.05),200); }
+
+/* =========================================================
+   UTIL
+========================================================= */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function hexToRgba(hex, alpha){
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function buildQueue(levelDef){
+  let queue = [];
+  while(queue.length < levelDef.itemsPerLevel){
+    queue = queue.concat(shuffle(levelDef.items));
+  }
+  return queue.slice(0, levelDef.itemsPerLevel);
+}
+
+/* =========================================================
+   SCREEN SWITCHING
+========================================================= */
+function switchScreen(name){
+  document.getElementById('screenStart').classList.toggle('hidden', name!=='start');
+  document.getElementById('screenGame').classList.toggle('hidden', name!=='game');
+}
+function hideAllOverlays(){
+  ['overlayHelp','overlayLevelComplete','overlayGameOver','overlayVictory'].forEach(id=>{
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+function goToStart(){
+  state.running = false;
+  state.paused = true;
+  state.activeItems.forEach(it=>it.el.remove());
+  state.activeItems = [];
+  state.score = 0;
+  hideAllOverlays();
+  switchScreen('start');
+}
+
+/* =========================================================
+   START / LEVEL FLOW
+========================================================= */
+function beginGame(){
+  ensureAudio();
+  state.score = 0;
+  hideAllOverlays();
+  switchScreen('game');
+  state.running = true;
+  startLevel(0);
+}
+function startLevel(index){
+  state.levelIndex = index;
+  const def = LEVELS[index];
+  state.level = Object.assign({}, def, { queue: buildQueue(def) });
+  state.lives = MAX_LIVES;
+  state.combo = 1;
+  state.spawnedCount = 0;
+  state.resolvedCount = 0;
+  state.spawnAccum = 0;
+  state.spawnInterval = def.spawnStart;
+  state.elapsed = 0;
+  state.stats = {correct:0, wrong:0, missed:0};
+  state.activeItems.forEach(it=>it.el.remove());
+  state.activeItems = [];
+  state.paused = false;
+
+  hideAllOverlays();
+  document.getElementById('levelBanner').innerHTML =
+    `${def.title}<span>${def.subtitle}</span>`;
+  renderBins(def.bins);
+  updateScoreDisplay();
+  updateComboDisplay();
+  updateHearts();
+}
+function retryLevel(){ startLevel(state.levelIndex); }
+function continueAfterLevel(){
+  if(state.levelIndex >= LEVELS.length-1){
+    showVictory();
+  } else {
+    startLevel(state.levelIndex+1);
+  }
+}
+
+/* =========================================================
+   BINS
+========================================================= */
+function renderBins(bins){
+  binsRow.innerHTML = '';
+  state.level.binEls = [];
+  bins.forEach((b, i)=>{
+    const color = COLORS[i % COLORS.length];
+    const el = document.createElement('div');
+    el.className = 'port';
+    el.style.borderColor = hexToRgba(color, 0.85);
+    el.style.boxShadow = `0 0 16px ${hexToRgba(color,0.25)}`;
+    el.innerHTML = `<div class="ic">${b.emoji}</div><div class="lb">${b.label}</div>`;
+    binsRow.appendChild(el);
+    state.level.binEls.push({id:b.id, el, color});
+  });
+}
+function binUnder(clientX, clientY){
+  for(const b of state.level.binEls){
+    const r = b.el.getBoundingClientRect();
+    if(clientX>=r.left && clientX<=r.right && clientY>=r.top && clientY<=r.bottom) return b;
+  }
+  return null;
+}
+function highlightBinUnder(clientX, clientY){
+  const found = binUnder(clientX, clientY);
+  state.level.binEls.forEach(b=> b.el.classList.toggle('hover', !!found && b.id===found.id));
+}
+function clearBinHighlights(){
+  state.level.binEls.forEach(b=> b.el.classList.remove('hover'));
+}
+function flashBin(binObj, good){
+  binObj.el.classList.add(good?'flash-good':'flash-bad');
+  setTimeout(()=> binObj.el.classList.remove(good?'flash-good':'flash-bad'), 350);
+}
+
+/* =========================================================
+   HUD
+========================================================= */
+function updateScoreDisplay(){ document.getElementById('scoreVal').textContent = state.score; }
+function updateComboDisplay(){
+  const el = document.getElementById('comboDisplay');
+  el.textContent = state.combo>1 ? `🔥 Combo x${state.combo}` : 'Combo x1';
+}
+function updateHearts(){
+  const full = '❤️'.repeat(Math.max(state.lives,0));
+  const empty = '🖤'.repeat(Math.max(MAX_LIVES-state.lives,0));
+  document.getElementById('livesDisplay').textContent = full+empty;
+}
+
+/* =========================================================
+   FX (floating text + particles)
+========================================================= */
+function spawnFloatingText(x,y,text,cls){
+  const el = document.createElement('div');
+  el.className = 'fx-text '+cls;
+  el.textContent = text;
+  el.style.left = x+'px';
+  el.style.top = y+'px';
+  fxLayer.appendChild(el);
+  setTimeout(()=> el.remove(), 950);
+}
+function spawnParticles(x,y,hex){
+  for(let i=0;i<10;i++){
+    const p = document.createElement('div');
+    p.className = 'fx-particle';
+    const angle = Math.random()*Math.PI*2;
+    const dist = 30+Math.random()*40;
+    p.style.left = x+'px';
+    p.style.top = y+'px';
+    p.style.background = hex;
+    p.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+    p.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+    fxLayer.appendChild(p);
+    setTimeout(()=> p.remove(), 650);
+  }
+}
+
+/* =========================================================
+   GAMEPLAY: SPAWN / DRAG / RESOLVE
+========================================================= */
+function spawnItem(){
+  const def = state.level.queue[state.spawnedCount];
+  state.spawnedCount++;
+
+  const el = document.createElement('div');
+  el.className = 'capsule';
+  el.textContent = def.text;
+  el.style.visibility = 'hidden';
+  playArea.appendChild(el);
+  const w = el.offsetWidth;
+  const xMax = Math.max(playArea.clientWidth - w - 10, 10);
+  const x = Math.random()*xMax;
+  el.style.left = x+'px';
+  el.style.top = '-90px';
+  el.style.visibility = 'visible';
+
+  const item = {
+    el, binId:def.binId, dragging:false,
+    y:-90,
+    speed: state.level.baseSpeed + Math.random()*12 + state.elapsed*state.level.ramp
+  };
+  el.addEventListener('pointerdown', (e)=> onCapsulePointerDown(e, item));
+  state.activeItems.push(item);
+}
+
+function onCapsulePointerDown(e, item){
+  e.preventDefault();
+  item.dragging = true;
+  item.el.classList.add('grabbed');
+  try{ item.el.setPointerCapture(e.pointerId); }catch(err){}
+
+  const onMove = (ev)=>{
+    const par = playArea.getBoundingClientRect();
+    let x = ev.clientX - par.left - item.el.offsetWidth/2;
+    let y = ev.clientY - par.top - item.el.offsetHeight/2;
+    item.y = y;
+    item.el.style.left = x+'px';
+    item.el.style.top = y+'px';
+    highlightBinUnder(ev.clientX, ev.clientY);
+  };
+  const onUp = (ev)=>{
+    item.el.removeEventListener('pointermove', onMove);
+    item.el.removeEventListener('pointerup', onUp);
+    try{ item.el.releasePointerCapture(e.pointerId); }catch(err){}
+    item.dragging = false;
+    item.el.classList.remove('grabbed');
+    clearBinHighlights();
+    const bin = binUnder(ev.clientX, ev.clientY);
+    if(bin){
+      resolveDrop(item, bin, ev.clientX, ev.clientY);
+    }
+  };
+  item.el.addEventListener('pointermove', onMove);
+  item.el.addEventListener('pointerup', onUp);
+}
+
+function removeActiveItem(item){
+  const idx = state.activeItems.indexOf(item);
+  if(idx>=0) state.activeItems.splice(idx,1);
+  item.el.remove();
+}
+
+function resolveDrop(item, bin, clientX, clientY){
+  const correct = item.binId === bin.id;
+  removeActiveItem(item);
+  state.resolvedCount++;
+
+  if(correct){
+    state.combo = Math.min(state.combo+1, 5);
+    const pts = 10*state.combo;
+    state.score += pts;
+    state.stats.correct++;
+    sfxCorrect();
+    flashBin(bin, true);
+    spawnParticles(clientX, clientY, bin.color);
+    spawnFloatingText(clientX, clientY, '+'+pts, 'good');
+  } else {
+    state.combo = 1;
+    state.stats.wrong++;
+    sfxWrong();
+    flashBin(bin, false);
+    spawnFloatingText(clientX, clientY, 'No es ahí', 'bad');
+    loseLife();
+  }
+  updateScoreDisplay();
+  updateComboDisplay();
+  if(state.lives>0) checkLevelComplete();
+}
+
+function handleMiss(item){
+  const r = item.el.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  removeActiveItem(item);
+  state.resolvedCount++;
+  state.stats.missed++;
+  state.combo = 1;
+  sfxMiss();
+  spawnFloatingText(cx, cy, '¡Se escapó!', 'bad');
+  updateComboDisplay();
+  loseLife();
+  if(state.lives>0) checkLevelComplete();
+}
+
+function loseLife(){
+  state.lives--;
+  updateHearts();
+  if(state.lives<=0) gameOver();
+}
+
+function checkLevelComplete(){
+  if(state.spawnedCount>=state.level.itemsPerLevel && state.activeItems.length===0){
+    levelComplete();
+  }
+}
+
+/* =========================================================
+   OUTCOME SCREENS
+========================================================= */
+function levelComplete(){
+  state.paused = true;
+  sfxLevel();
+  const isLast = state.levelIndex >= LEVELS.length-1;
+  document.getElementById('lcTitle').textContent = isLast ? '¡Último nivel superado!' : '¡Nivel superado!';
+  document.getElementById('lcCorrect').textContent = state.stats.correct+' / '+state.level.itemsPerLevel;
+  document.getElementById('lcWrong').textContent = state.stats.wrong;
+  document.getElementById('lcMissed').textContent = state.stats.missed;
+  document.getElementById('lcScore').textContent = state.score;
+  document.getElementById('lcContinueBtn').textContent = isLast ? 'Ver resultado final →' : 'Siguiente nivel →';
+  document.getElementById('overlayLevelComplete').classList.remove('hidden');
+}
+function showVictory(){
+  hideAllOverlays();
+  document.getElementById('vScore').textContent = state.score;
+  document.getElementById('overlayVictory').classList.remove('hidden');
+}
+function gameOver(){
+  state.paused = true;
+  document.getElementById('goScore').textContent = state.score;
+  document.getElementById('overlayGameOver').classList.remove('hidden');
+}
+
+/* =========================================================
+   HELP MODAL
+========================================================= */
+function toggleHelp(show){
+  if(show){
+    const legend = document.getElementById('helpLegend');
+    legend.innerHTML = '';
+    state.level.bins.forEach((def)=>{
+      legend.innerHTML += `<div class="row"><span class="ic">${def.emoji}</span><span>${def.label}</span></div>`;
+    });
+    document.getElementById('overlayHelp').classList.remove('hidden');
+    state.paused = true;
+  } else {
+    document.getElementById('overlayHelp').classList.add('hidden');
+    state.paused = false;
+  }
+}
+
+/* =========================================================
+   MAIN LOOP
+========================================================= */
+let lastTime = null;
+function loop(now){
+  requestAnimationFrame(loop);
+  if(!state.running){ lastTime = null; return; }
+  if(lastTime===null){ lastTime = now; return; }
+  const dt = now - lastTime;
+  lastTime = now;
+  if(state.paused) return;
+
+  state.elapsed += dt/1000;
+  state.spawnAccum += dt;
+  if(state.spawnAccum>=state.spawnInterval &&
+     state.activeItems.length<MAX_ON_SCREEN &&
+     state.spawnedCount<state.level.itemsPerLevel){
+    spawnItem();
+    state.spawnAccum = 0;
+    state.spawnInterval = Math.max(state.level.spawnMin, state.spawnInterval-state.level.spawnRamp);
+  }
+
+  const playH = playArea.clientHeight;
+  for(let i=state.activeItems.length-1;i>=0;i--){
+    const item = state.activeItems[i];
+    if(item.dragging) continue;
+    item.y += item.speed*dt/1000;
+    item.el.style.top = item.y+'px';
+    if(item.y > playH){
+      handleMiss(item);
+    }
+  }
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
